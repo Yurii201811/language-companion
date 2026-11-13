@@ -9,6 +9,7 @@
     LOOKUP: "lookup",
     LOOKUP_DETAILS: "lookupDetails",
     PEEK: "peek",
+    FURIGANA: "furigana",
     ANKI_STATUS: "ankiStatus",
     ANKI_DECKS: "ankiDecks",
     ANKI_CREATE_DECK: "ankiCreateDeck",

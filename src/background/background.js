@@ -6,6 +6,7 @@ import { createFrequency } from "./frequency.js";
 import { getCached, setCached } from "./cache.js";
 import { flushQueue, loadLog, logAdded, queueNote, removeEntry } from "./word-log.js";
 import * as ocr from "./ocr.js";
+import { sentenceFurigana } from "./furigana.js";
 import { allowed } from "./senders.js";
 
 const { MSG, settings: settingsStore } = globalThis.LC;
@@ -167,6 +168,14 @@ const handlers = {
   async [MSG.PEEK](message) {
     checkLookup(message);
     return peekWord(message, await settingsStore.getSettings(), lookupContext);
+  },
+
+  // Readings over the kanji of a speech bubble. Only while the setting is on, so a page can't
+  // start the dictionary download.
+  async [MSG.FURIGANA]({ text }) {
+    if (typeof text !== "string" || !text.trim() || text.length > MAX_SENTENCE_LENGTH) throw new Error("Invalid text.");
+    if (!(await settingsStore.getSettings()).bubbleFurigana) return [];
+    return sentenceFurigana(text);
   },
 
   async [MSG.LOOKUP_DETAILS](message) {

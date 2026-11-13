@@ -6,17 +6,19 @@
   "description": "Firefox extension for learning languages while browsing, with Anki integration via AnkiConnect.",
   "type": "module",
   "scripts": {
-    "prestart": "node scripts/vendor-ort.mjs",
+    "prestart": "node scripts/vendor-ort.mjs && node scripts/vendor-kuromoji.mjs",
     "start": "web-ext run --source-dir . --browser-console --start-url https://en.wikipedia.org/wiki/House",
-    "prelint": "node scripts/vendor-ort.mjs",
+    "prelint": "node scripts/vendor-ort.mjs && node scripts/vendor-kuromoji.mjs",
     "lint": "web-ext lint --source-dir .",
-    "prebuild": "node scripts/vendor-ort.mjs",
+    "prebuild": "node scripts/vendor-ort.mjs && node scripts/vendor-kuromoji.mjs",
     "build": "web-ext build --source-dir . --overwrite-dest",
+    "pretest": "node scripts/vendor-kuromoji.mjs",
     "test": "node --test \"test/*.test.js\"",
-    "prelab": "node scripts/vendor-ort.mjs",
+    "prelab": "node scripts/vendor-ort.mjs && node scripts/vendor-kuromoji.mjs",
     "lab": "web-ext run --source-dir . --browser-console --start-url moz-extension://62507959-2455-4db3-851d-e4b7ccd8ed3b/src/lab/ocr-lab.html"
   },
   "devDependencies": {
+    "kuromoji": "0.1.2",
     "onnxruntime-web": "1.31.1",
     "web-ext": "^8.3.0"
   }

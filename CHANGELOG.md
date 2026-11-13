@@ -4,6 +4,10 @@ All notable changes to Language Companion. The format follows [Keep a Changelog]
 
 ## [Unreleased]
 
+### Added
+
+- Furigana in speech bubbles: turn on "Show readings over the kanji in Japanese speech bubbles" in the settings under "Text in images", and the bubble's text shows readings over its kanji. Readings come from kuromoji, which runs on your computer; its dictionary (about 17 MB) is downloaded once when the setting is on, checked, and can be deleted with the other downloaded models. Readings are guessed from context, so now and then one is wrong
+
 ## [0.5.0] - 2026-11-07
 
 Language Companion now focuses on understanding Japanese and Korean. Translating comes first; saving to Anki is optional.

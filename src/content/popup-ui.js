@@ -61,6 +61,35 @@
     return furigana.segments(word, reading).map(({ text, rt }) => (rt ? h("ruby", {}, text, h("rt", {}, rt)) : text));
   }
 
+  // A speech bubble's words ({ text, start, end }, see languages.segmentWords), joined where a
+  // reading ({ start, end, rt }, sorted) spans more than one, so each reading sits in one word.
+  function joinAcrossReadings(tokens, readings) {
+    const joined = [];
+    for (const token of tokens) {
+      const last = joined.at(-1);
+      if (last && readings.some((r) => r.start < last.end && r.end > last.end)) {
+        Object.assign(last, { text: last.text + token.text, end: token.end, isWord: last.isWord || token.isWord });
+      } else {
+        joined.push({ ...token });
+      }
+    }
+    return joined;
+  }
+
+  // One bubble word with its readings over the kanji.
+  function tokenWithReadings(token, readings) {
+    const parts = [];
+    let at = token.start;
+    for (const r of readings) {
+      if (r.start < at || r.end > token.end) continue;
+      if (r.start > at) parts.push(token.text.slice(at - token.start, r.start - token.start));
+      parts.push(h("ruby", {}, token.text.slice(r.start - token.start, r.end - token.start), h("rt", {}, r.rt)));
+      at = r.end;
+    }
+    if (at < token.end) parts.push(token.text.slice(at - token.start));
+    return parts;
+  }
+
   // Renders `sentence` with the first occurrence of `word` wrapped in <mark>.
   function highlighted(sentence, word) {
     const index = word ? sentence.toLowerCase().indexOf(word.toLowerCase()) : -1;
@@ -263,7 +292,15 @@
     }
 
     setSentenceText(view, text) {
-      Object.assign(view, text ? { text, status: "ready", tokens: null } : { status: "error", error: "No text found in this bubble." });
+      Object.assign(view, text ? { text, status: "ready", tokens: null, readings: [] } : { status: "error", error: "No text found in this bubble." });
+      if (this.state === view) this.render();
+    }
+
+    // Furigana for the bubble's text: [{ start, end, rt }]. Joining words under a reading changes
+    // the word indexes, so a word picked before is unpicked.
+    setSentenceFurigana(view, readings) {
+      if (!readings?.length || view.status !== "ready") return;
+      Object.assign(view, { readings, tokens: null, selection: null });
       if (this.state === view) this.render();
     }
 
@@ -604,11 +641,14 @@
         return [header, h("div", { class: "skeleton", "aria-label": "Reading the bubble…", role: "status" }, h("span", { class: "bar wide" }), h("span", { class: "bar" }))];
       }
       if (s.status === "error") return [header, h("div", { class: "problem", role: "alert" }, icon("alert"), h("span", {}, s.error))];
-      s.tokens ??= languages.segmentWords(s.text, s.lang);
+      const readings = s.readings ?? [];
+      s.tokens ??= joinAcrossReadings(languages.segmentWords(s.text, s.lang), readings);
       const tokens = h(
         "div",
-        { class: "tokens", lang: s.lang, onPointerdown: (event) => this.startPicking(event) },
-        s.tokens.map((token, i) => h("span", { class: token.isWord ? "token word-token" : "token", "data-i": String(i) }, token.text)),
+        { class: readings.length ? "tokens with-furigana" : "tokens", lang: s.lang, onPointerdown: (event) => this.startPicking(event) },
+        s.tokens.map((token, i) =>
+          h("span", { class: token.isWord ? "token word-token" : "token", "data-i": String(i) }, readings.length ? tokenWithReadings(token, readings) : token.text),
+        ),
       );
       this.tokensElement = tokens;
       this.highlightPick();

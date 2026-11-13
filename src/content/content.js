@@ -179,6 +179,21 @@
   // Translations of speech bubbles, so going back to a bubble doesn't translate it again.
   const bubbleTranslations = new Map();
 
+  // Readings over a bubble's kanji, kept like the translations. The first time, the background
+  // downloads its dictionary; until then, or if that fails, the bubble just has no furigana.
+  const bubbleFurigana = new Map();
+
+  async function addFurigana(card, view, text) {
+    if (!bubbleFurigana.has(text)) {
+      const ranges = send(MSG.FURIGANA, { text }).catch(() => {
+        bubbleFurigana.delete(text);
+        return [];
+      });
+      bubbleFurigana.set(text, ranges);
+    }
+    card.setSentenceFurigana(view, await bubbleFurigana.get(text));
+  }
+
   // Opens the card on a speech bubble (image-text.js). Its text comes later through the returned
   // { setText, setError }; once the text is there, it is translated with the user's translator.
   async function openSentence(rect, { lang, context }) {
@@ -189,6 +204,7 @@
       setText: async (text) => {
         card.setSentenceText(view, text);
         if (!text) return;
+        if (settings.bubbleFurigana && lang === "ja" && LC.furigana.hasKanji(text)) addFurigana(card, view, text);
         if (!bubbleTranslations.has(text)) {
           bubbleTranslations.set(
             text,

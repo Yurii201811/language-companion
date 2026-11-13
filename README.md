@@ -111,7 +111,7 @@ Select a word or a sentence and click the small **文A** button that appears. To
 
 The global shortcut can be changed in `about:addons` → ⚙ → **Manage Extension Shortcuts**. In the settings you can choose how the card opens (button, right away, or only by shortcut), turn sources on or off, and disable the extension on single sites.
 
-**Manga and webtoons:** Shonen Jump+ is on by default; for other sites, open the toolbar menu there and turn on "Read text in images". Firefox asks once for permission to access all websites, which it requires before an extension may capture the visible part of a tab. The first time, the text recognition models are downloaded (about 120 MB for Japanese, 20 MB for Korean), with the progress in the page's corner. After each page turn, the speech bubbles light up briefly; later they show an outline when you point at them. Click one and the card shows its text and translation; to click the page under a bubble, hold <kbd>Ctrl</kbd> or <kbd>⌘</kbd>. Click a word, drag across several, or Shift+click to extend, and the card shows that word, with ← (or <kbd>Backspace</kbd>) back to the bubble. Downloaded models and sites can be managed in the settings under "Text in images". Each bubble takes about a second to read; reading starts as soon as a page appears, so the next bubbles are usually ready.
+**Manga and webtoons:** Shonen Jump+ is on by default; for other sites, open the toolbar menu there and turn on "Read text in images". Firefox asks once for permission to access all websites, which it requires before an extension may capture the visible part of a tab. The first time, the text recognition models are downloaded (about 120 MB for Japanese, 20 MB for Korean), with the progress in the page's corner. After each page turn, the speech bubbles light up briefly; later they show an outline when you point at them. Click one and the card shows its text and translation; to click the page under a bubble, hold <kbd>Ctrl</kbd> or <kbd>⌘</kbd>. Click a word, drag across several, or Shift+click to extend, and the card shows that word, with ← (or <kbd>Backspace</kbd>) back to the bubble. Downloaded models and sites can be managed in the settings under "Text in images", where you can also turn on furigana over the kanji in Japanese bubbles (downloads a 17 MB dictionary once). Each bubble takes about a second to read; reading starts as soon as a page appears, so the next bubbles are usually ready.
 
 **YouTube:** turn on subtitles in the player (any track, including auto-generated ones) and click a word. The card works in fullscreen, and the video resumes when it closes.
 
@@ -167,7 +167,7 @@ npm run build    # package into web-ext-artifacts/
 npm run lab      # test page for text recognition in images
 ```
 
-The code is plain JavaScript with no build step. The only runtime dependency, ONNX Runtime Web, is copied from `node_modules` into `src/vendor/` before `start`, `lint` and `build`.
+The code is plain JavaScript with no build step. The runtime dependencies, ONNX Runtime Web and kuromoji, are copied from `node_modules` into `src/vendor/` before `start`, `lint`, `build` and `test`.
 
 ```
 manifest.json
@@ -183,9 +183,9 @@ src/
   action/        toolbar popup
   stats/         stats page
   lab/           text recognition test page (development only, not packaged)
-  vendor/        Mozilla Readability, ONNX Runtime Web
+  vendor/        Mozilla Readability, ONNX Runtime Web, kuromoji
 data/            KANJIDIC2 and frequency lists, built by scripts/
-scripts/         converts the upstream dictionaries into data/, copies ONNX Runtime
+scripts/         converts the upstream dictionaries into data/, copies ONNX Runtime and kuromoji
 test/            node:test unit tests with saved API responses in test/fixtures
 store/           addons.mozilla.org listing text and screenshots (not packaged)
 ```
@@ -243,6 +243,7 @@ Language Companion is built on the work of these projects:
 - [manga-ocr](https://github.com/kha-white/manga-ocr) by Maciej Budyś, reading Japanese manga, Apache-2.0
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) by PaddlePaddle, finding text in images and reading Korean, Apache-2.0
 - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) by Microsoft, which runs these models in the browser, MIT
+- [kuromoji.js](https://github.com/takuyaa/kuromoji.js) by Takuya Asano, with the [IPADIC](https://github.com/taku910/mecab) dictionary, furigana in speech bubbles, Apache-2.0
 - [Readability](https://github.com/mozilla/readability) by Mozilla, the reader's article extraction, Apache-2.0
 - [AnkiConnect](https://ankiweb.net/shared/info/2055492159), which makes the Anki parts possible
 

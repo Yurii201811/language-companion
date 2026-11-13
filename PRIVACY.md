@@ -22,6 +22,8 @@ The kanji dictionary (KANJIDIC2) and the word frequency lists are built into the
 
 **Text in images:** the first time it reads a page, the extension downloads its text recognition models from Hugging Face (huggingface.co): about 120 MB for Japanese (manga-ocr), 20 MB for Korean (PaddleOCR). This request contains nothing about you or the page. The models are then kept on your computer.
 
+**Furigana in speech bubbles (off unless you turn it on):** the first time, the extension downloads a Japanese dictionary (about 17 MB) from jsDelivr (cdn.jsdelivr.net). This request contains nothing about you or the page. The dictionary is then kept on your computer, and the readings are worked out there.
+
 ## What stays on your computer
 
 - **Anki (optional, off unless you turn it on):** words you save go to Anki on your own computer through AnkiConnect (`127.0.0.1`), together with the sentence and the page address and title as the source.

@@ -480,6 +480,16 @@
   cursor: pointer;
 }
 
+/* Room above each line for the readings. */
+.tokens.with-furigana {
+  line-height: 2.2;
+}
+
+.tokens rt {
+  font-size: 10px;
+  color: var(--muted);
+}
+
 .token {
   border-radius: 4px;
   transition: background-color 80ms;

@@ -21,5 +21,5 @@
     return runs.map((run, i) => (KANJI.test(run) ? { text: run, rt: match[i + 1] } : { text: run }));
   }
 
-  LC.furigana = Object.freeze({ segments, hasKanji: (text) => KANJI.test(text ?? "") });
+  LC.furigana = Object.freeze({ segments, toHiragana, hasKanji: (text) => KANJI.test(text ?? "") });
 })();

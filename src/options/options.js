@@ -131,9 +131,9 @@ function updateAnki() {
 
 // Firefox lets extensions capture a tab without a click only with <all_urls> (background/ocr.js).
 const ALL_SITES = { origins: ["<all_urls>"] };
-// The cache the background keeps the downloaded models in (background/ocr.js). Extension pages
-// share it, since they have the same origin.
-const MODEL_CACHE = "ocr-models-v2";
+// The caches the background keeps the downloaded models in (background/ocr.js) and the furigana
+// dictionary (background/furigana.js). Extension pages share them, since they have the same origin.
+const MODEL_CACHES = ["ocr-models-v2", "furigana-dict-v1"];
 
 async function renderImageText() {
   const granted = await browser.permissions.contains(ALL_SITES);
@@ -167,8 +167,11 @@ async function renderImageText() {
 
 async function renderModels() {
   let bytes = 0;
-  const cache = await caches.open(MODEL_CACHE);
-  for (const request of await cache.keys()) bytes += (await (await cache.match(request)).blob()).size;
+  for (const name of MODEL_CACHES) {
+    if (!(await caches.has(name))) continue;
+    const cache = await caches.open(name);
+    for (const request of await cache.keys()) bytes += (await (await cache.match(request)).blob()).size;
+  }
   $("#images-models").textContent = bytes ? `${Math.round(bytes / 1e6)} MB` : "None yet. They download the first time a page is read.";
   $("#images-delete-models").hidden = !bytes;
 }
@@ -199,7 +202,7 @@ function bindImageText() {
   });
   $("#images-new-site").addEventListener("input", () => $("#images-new-site").setCustomValidity(""));
   $("#images-delete-models").addEventListener("click", async () => {
-    await caches.delete(MODEL_CACHE);
+    await Promise.all(MODEL_CACHES.map((name) => caches.delete(name)));
     renderModels();
   });
 }

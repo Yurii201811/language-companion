@@ -19,7 +19,7 @@ test("isExtensionPage only matches the extension's own origin", () => {
 });
 
 test("content scripts get what the card and text in images need", () => {
-  for (const type of [MSG.LOOKUP, MSG.LOOKUP_DETAILS, MSG.PEEK, MSG.GET_CARD_CSS, MSG.ANKI_DECKS, MSG.ANKI_ADD_NOTE, MSG.ANKI_CHECK_DUPLICATE, MSG.ANKI_BROWSE, MSG.OCR_SCAN, MSG.OCR_READ]) {
+  for (const type of [MSG.LOOKUP, MSG.LOOKUP_DETAILS, MSG.PEEK, MSG.FURIGANA, MSG.GET_CARD_CSS, MSG.ANKI_DECKS, MSG.ANKI_ADD_NOTE, MSG.ANKI_CHECK_DUPLICATE, MSG.ANKI_BROWSE, MSG.OCR_SCAN, MSG.OCR_READ]) {
     assert.equal(allowed(type, contentScript, info), true, type);
   }
 });
