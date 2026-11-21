@@ -85,6 +85,7 @@ function render() {
   $("#empty").hidden = saved.length > 0;
   $("#filters").hidden = saved.length === 0;
   $("#export").hidden = saved.length === 0;
+  $("#clear").hidden = saved.length === 0;
   $("#no-match").hidden = saved.length === 0 || shown.length > 0;
   $("#count").textContent = saved.length === 0 ? "" : shown.length === saved.length ? `${saved.length} words` : `${shown.length} of ${saved.length} words`;
   $("#words").replaceChildren(...shown.map(renderEntry));
@@ -121,5 +122,10 @@ function exportCsv() {
 $("#search").addEventListener("input", render);
 $("#language").addEventListener("change", render);
 $("#export").addEventListener("click", exportCsv);
+$("#clear").addEventListener("click", () => {
+  const count = saved.length;
+  if (!confirm(`Delete all ${count} saved words? This can't be undone. Export them as CSV first if you want to keep them.`)) return;
+  send(MSG.SAVED_CLEAR);
+});
 browser.storage.onChanged.addListener((changes, area) => area === "local" && changes[SAVED_KEY] && load());
 load();

@@ -54,11 +54,12 @@ npx web-ext sign --channel=listed --api-key=$AMO_JWT_ISSUER --api-secret=$AMO_JW
 Language Companion helps you understand Japanese and Korean in real content. Select a word or a sentence and see what it means right there, without leaving the page.
 
 • Translation, reading, dictionary form and kanji, plus the translation of the whole sentence
+• Furigana over Japanese sentences, in manga and in the reader
 • Manga and webtoons: click a speech bubble to read and translate its text
 • A calm reader view for articles, and clickable YouTube subtitles
-• Optional: save words to Anki in one click
+• Save the words you look up and export them as CSV, or add them to Anki in one click
 
-No account, no tracking. Text in images is recognised on your computer.
+No account, no tracking. Text in images and furigana are worked out on your computer.
 
 Data: Jisho, KANJIDIC2, Wiktionary, Tatoeba, FrequencyWords. Text recognition: manga-ocr, PaddleOCR.
 ```
@@ -70,6 +71,10 @@ Data: Jisho, KANJIDIC2, Wiktionary, Tatoeba, FrequencyWords. Text recognition: m
 1. `1-japanese-reader.png`: Reader view: reading, dictionary form and meaning at a glance.
 2. `2-manga-bubble.png`: Click a speech bubble to read and translate its text. The page is our own drawing.
 3. `3-korean-page.png`: Works on any page. Korean verbs lead to their dictionary form.
+
+**Release notes for 0.6.0:**
+
+> Save words without Anki: click ☆ on the card (or press S), and the Saved words page lists them with search and a CSV export. Furigana now appears over the card's sentence, in speech bubbles and in the reader (ふ hides it). It's on by default: the first time, a 17 MB Japanese dictionary is downloaded once from jsDelivr and checked; the request contains nothing about you, and the readings are worked out on your computer. Turn it off in the settings.
 
 **Release notes for 0.5.0:**
 
@@ -88,11 +93,12 @@ Text in images: the visible tab is captured only on sites the user turned on, pr
 
 Third-party code:
 - src/vendor/readability/Readability.js is Mozilla Readability 0.6.0, unmodified (Apache-2.0). The two innerHTML lint warnings come from it.
+- src/vendor/kuromoji/kuromoji.js is kuromoji.js 0.1.2 from npm (build/kuromoji.js, Apache-2.0): https://www.npmjs.com/package/kuromoji/v/0.1.2. scripts/vendor-kuromoji.mjs changes two lines: its dictionary loader calls the extension instead of XMLHttpRequest, and Function('return this')() becomes globalThis. Nothing else is changed. The dictionary it uses (IPADIC, 12 .dat.gz files) is data, downloaded once from cdn.jsdelivr.net at the pinned package version, checked against SHA-256 hashes in src/background/furigana.js and kept in the Cache API.
 - src/vendor/onnxruntime-web/ (ort.wasm.min.mjs, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm) is onnxruntime-web 1.31.1 from npm, unmodified (MIT): https://www.npmjs.com/package/onnxruntime-web/v/1.31.1 (dist/ folder). The dynamic import lint warning comes from it loading its own helper file.
 
 Data files: data/kanjidic (KANJIDIC2) and data/frequency (FrequencyWords) are public dictionaries, CC BY-SA 4.0, converted to plain text by scripts/build-*.mjs in the source repository (https://github.com/mirodn/language-companion). They are data only, never executed.
 
-Network: requests go only to the services in host_permissions with the looked-up word or sentence, to huggingface.co for the models, and to AnkiConnect on 127.0.0.1:8765 if the user turns Anki on. No analytics.
+Network: requests go only to the services in host_permissions with the looked-up word or sentence, to huggingface.co for the text recognition models, to cdn.jsdelivr.net for the furigana dictionary (once, no user data), and to AnkiConnect on 127.0.0.1:8765 if the user turns Anki on. Saved words stay in storage.local. No analytics.
 ```
 
 ---
@@ -109,6 +115,10 @@ Run in a fresh profile with the built zip:
 - [ ] Korean page: 갔어요 → "Base form: 가다"
 - [ ] Kanji-only text (学校) is looked up as Japanese; English text: no lookup button appears
 - [ ] Toolbar → Open in reader on a news article; click words; Shift peek
+- [ ] Japanese article in the reader: furigana appears over the kanji as you scroll, words stay clickable, the card's sentence has no readings in it; ふ hides and shows them
+- [ ] First Japanese lookup in a fresh profile: furigana on the word and sentence shows up shortly after the translation (dictionary download); 優秀 / 総称 show no gap between the kanji
+- [ ] ☆ on the card (or S) fills the star; looking up the word again shows it filled; toolbar → Saved words lists it with reading, sentence and link; search, Delete, Export CSV (Japanese intact in a spreadsheet), Delete all asks first
+- [ ] Settings → turn off Furigana → no readings on the card, bubbles or reader; Downloaded models → Delete also removes the dictionary
 - [ ] YouTube with Japanese subtitles: click a subtitle word → video pauses → card → close → video resumes
 - [ ] Shonen Jump+ chapter: toolbar switch → permission → "Getting text recognition ready…" → outlines on bubbles; the download shows MB progress; click a bubble → the card shows its text and translation; click/drag words → word view with ← back to the bubble; clicking a bubble doesn't turn the page; turning the page clears and rescans
 - [ ] Shonen Jump+ home page and other pages without a manga page: no outlines, no "Getting text recognition ready…"; the viewer's arrows get no outline

@@ -5,7 +5,7 @@ import { lookupDetails, lookupTranslation, peekWord } from "./lookup.js";
 import { createFrequency } from "./frequency.js";
 import { getCached, setCached } from "./cache.js";
 import { flushQueue, loadLog, logAdded, queueNote, removeEntry } from "./word-log.js";
-import { isSaved, removeSaved, saveWord, unsaveWord } from "./saved-words.js";
+import { clearSaved, isSaved, removeSaved, saveWord, unsaveWord } from "./saved-words.js";
 import * as ocr from "./ocr.js";
 import { sentenceFurigana, warmFurigana } from "./furigana.js";
 import { allowed } from "./senders.js";
@@ -278,6 +278,7 @@ const handlers = {
   },
   [MSG.WORD_SAVED]: ({ lang, word }) => (checkSavedWord(lang, word), isSaved(lang, word)),
   [MSG.SAVED_REMOVE]: ({ id }) => removeSaved(id),
+  [MSG.SAVED_CLEAR]: () => clearSaved(),
 
   // Text in images (see ocr.js and content/image-text.js).
   [MSG.OCR_PERMISSION]: () => ocr.hasPermission(),

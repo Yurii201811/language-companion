@@ -4,10 +4,19 @@ All notable changes to Language Companion. The format follows [Keep a Changelog]
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-21
+
 ### Added
 
-- Saved words, without Anki: the ☆ on the card (or <kbd>S</kbd>) keeps the word with its reading, meaning, sentence and a link to where you found it. The new Saved words page (toolbar menu → Saved words) lists them with search, a language filter and Delete, and exports them as CSV for spreadsheets or an Anki import. Words added to Anki are saved there too. Everything stays in your browser
+- Saved words, without Anki: the ☆ on the card (or <kbd>S</kbd>) keeps the word with its reading, meaning, sentence and a link to where you found it. The new Saved words page (toolbar menu → Saved words) lists them with search, a language filter, Delete and Delete all, and exports them as CSV for spreadsheets or an Anki import. Words added to Anki are saved there too. Everything stays in your browser
 - Furigana over Japanese sentences: the card's sentence and word, speech bubbles and articles in the reader show readings over their kanji. In the reader, the ふ button hides and shows them (also a page's own furigana), so you can try a text without. On by default; turn it off under Settings → Translation & dictionaries. Readings come from kuromoji, which runs on your computer; its dictionary (about 17 MB) is downloaded the first time, checked, and can be deleted with the other downloaded models. Readings are guessed from context, so now and then one is wrong
+
+### Changed
+
+- Readings appear at the same time as the translation, and kanji stay together under a long reading (優秀 no longer shows as 優 秀)
+- Text a manga site shows itself (titles, comments, menus) gets no bubbles and can be selected as usual, also when a selection crosses a bubble; hidden pictures no longer count as a manga page
+- The bubble card's hint on picking words is shown until the first pick
+- The kanji list shows readings without KANJIDIC's dots (すべて instead of す.べて)
 
 ## [0.5.0] - 2026-11-07
 
@@ -91,5 +100,7 @@ The first public release.
 - Stats page with words per week and a streak
 - Light and dark theme, keyboard shortcuts, context menu, per-site disable
 
-[Unreleased]: https://github.com/mirodn/language-companion/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/mirodn/language-companion/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/mirodn/language-companion/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/mirodn/language-companion/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mirodn/language-companion/releases/tag/v0.4.0

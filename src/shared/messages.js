@@ -25,6 +25,7 @@
     WORD_UNSAVE: "wordUnsave",
     WORD_SAVED: "wordSaved",
     SAVED_REMOVE: "savedRemove",
+    SAVED_CLEAR: "savedClear",
     OCR_PERMISSION: "ocrPermission",
     OCR_SCAN: "ocrScan",
     OCR_READ: "ocrRead",

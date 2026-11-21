@@ -1,6 +1,6 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { entryFor, isSaved, loadSaved, removeSaved, saveWord, unsaveWord } from "../src/background/saved-words.js";
+import { clearSaved, entryFor, isSaved, loadSaved, removeSaved, saveWord, unsaveWord } from "../src/background/saved-words.js";
 import { toCsv } from "../src/words/csv.js";
 
 // browser.storage.local in memory.
@@ -62,6 +62,13 @@ test("unsave and remove take words out", async () => {
   const [left] = await loadSaved();
   assert.equal(left.word, "飲む");
   await removeSaved(left.id);
+  assert.deepEqual(await loadSaved(), []);
+});
+
+test("clear deletes all saved words", async () => {
+  await saveWord(card("食べる"));
+  await saveWord(card("飲む"));
+  await clearSaved();
   assert.deepEqual(await loadSaved(), []);
 });
 

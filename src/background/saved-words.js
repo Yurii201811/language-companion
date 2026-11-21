@@ -89,6 +89,10 @@ export function removeSaved(id) {
   });
 }
 
+export function clearSaved() {
+  return update((entries) => void entries.splice(0));
+}
+
 export async function isSaved(lang, word) {
   return (await loadSaved()).some(sameWord(lang, text(word)));
 }

@@ -25,7 +25,7 @@ test("content scripts get what the card and text in images need", () => {
 });
 
 test("content scripts can't open other tabs in the reader or change Anki and the saved words", () => {
-  for (const type of [MSG.OPEN_READER, MSG.ANKI_STATUS, MSG.ANKI_CREATE_DECK, MSG.ANKI_MODELS, MSG.ANKI_MODEL_FIELDS, MSG.LOG_REMOVE, MSG.QUEUE_FLUSH, MSG.SAVED_REMOVE]) {
+  for (const type of [MSG.OPEN_READER, MSG.ANKI_STATUS, MSG.ANKI_CREATE_DECK, MSG.ANKI_MODELS, MSG.ANKI_MODEL_FIELDS, MSG.LOG_REMOVE, MSG.QUEUE_FLUSH, MSG.SAVED_REMOVE, MSG.SAVED_CLEAR]) {
     assert.equal(allowed(type, contentScript, info), false, type);
   }
 });

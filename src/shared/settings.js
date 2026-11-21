@@ -46,8 +46,8 @@
     // Sites where text in images (manga, webtoons) is read and made clickable. Also needs the
     // optional <all_urls> permission, which the toolbar popup asks for.
     imageTextSites: ["shonenjumpplus.com"],
-    // Furigana over the kanji of Japanese sentences, in the card and in speech bubbles. Downloads a
-    // dictionary (about 17 MB) once, the first time a sentence with kanji is shown.
+    // Furigana over the kanji of Japanese text: the card, speech bubbles and the reader. Downloads a
+    // dictionary (about 17 MB) from jsDelivr once, the first time Japanese with kanji is shown.
     furigana: true,
 
     youtubeEnabled: true,

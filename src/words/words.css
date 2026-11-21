@@ -15,6 +15,15 @@ header {
   gap: 12px;
 }
 
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+button.danger {
+  color: var(--danger);
+}
+
 .small {
   font-size: 12px;
 }
