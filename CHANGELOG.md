@@ -6,7 +6,8 @@ All notable changes to Language Companion. The format follows [Keep a Changelog]
 
 ### Added
 
-- Furigana in speech bubbles: turn on "Show readings over the kanji in Japanese speech bubbles" in the settings under "Text in images", and the bubble's text shows readings over its kanji. Readings come from kuromoji, which runs on your computer; its dictionary (about 17 MB) is downloaded once when the setting is on, checked, and can be deleted with the other downloaded models. Readings are guessed from context, so now and then one is wrong
+- Saved words, without Anki: the ☆ on the card (or <kbd>S</kbd>) keeps the word with its reading, meaning, sentence and a link to where you found it. The new Saved words page (toolbar menu → Saved words) lists them with search, a language filter and Delete, and exports them as CSV for spreadsheets or an Anki import. Words added to Anki are saved there too. Everything stays in your browser
+- Furigana over Japanese sentences: the card's sentence and word, speech bubbles and articles in the reader show readings over their kanji. In the reader, the ふ button hides and shows them (also a page's own furigana), so you can try a text without. On by default; turn it off under Settings → Translation & dictionaries. Readings come from kuromoji, which runs on your computer; its dictionary (about 17 MB) is downloaded the first time, checked, and can be deleted with the other downloaded models. Readings are guessed from context, so now and then one is wrong
 
 ## [0.5.0] - 2026-11-07
 

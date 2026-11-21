@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Saved words · Language Companion</title>
+    <link rel="stylesheet" href="../shared/page.css" />
+    <link rel="stylesheet" href="words.css" />
+    <script src="../shared/messages.js"></script>
+    <script src="../shared/languages.js"></script>
+    <script src="../shared/furigana.js"></script>
+    <script type="module" src="words.js"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="title-row">
+          <h1>Saved words</h1>
+          <button type="button" id="export" hidden>Export CSV</button>
+        </div>
+        <p class="muted">Words you saved with ☆ on the card (or added to Anki). They stay in this browser.</p>
+      </header>
+
+      <div class="filters" id="filters" hidden>
+        <input type="text" id="search" placeholder="Search words, readings, meanings, sentences" aria-label="Search saved words" autocomplete="off" />
+        <select id="language" aria-label="Language" hidden></select>
+      </div>
+
+      <p id="empty" class="muted" hidden>No saved words yet. Select a word on any page and click ☆ on the card, or press <kbd>S</kbd>.</p>
+      <p id="no-match" class="muted" hidden>No saved words match.</p>
+      <p id="count" class="muted small"></p>
+
+      <ul id="words" class="words"></ul>
+    </main>
+  </body>
+</html>

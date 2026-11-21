@@ -1,5 +1,6 @@
 import { STORAGE_KEY, loadLog } from "../background/word-log.js";
 import { summarize } from "../stats/summary.js";
+import { SAVED_KEY, loadSaved } from "../background/saved-words.js";
 
 const { MSG, languages, settings: settingsStore } = globalThis.LC;
 
@@ -23,6 +24,11 @@ async function showSummary() {
   const parts = [`${plural(thisWeek, "word")} this week`];
   if (queued.length) parts.push(`${queued.length} waiting for Anki`);
   $("#summary").textContent = parts.join(" · ");
+}
+
+async function showSavedCount() {
+  const count = (await loadSaved()).length;
+  $("#saved-count").textContent = count ? `(${count})` : "";
 }
 
 // The current tab's hostname for http(s) pages, otherwise "".
@@ -116,6 +122,14 @@ async function init() {
     $("#reader-error").textContent = response.error;
     $("#reader-error").hidden = false;
   });
+
+  // Saved words (☆ on the card), with Anki or without.
+  $("#open-words").addEventListener("click", (e) => {
+    e.preventDefault();
+    openPage("src/words/words.html");
+  });
+  showSavedCount();
+  browser.storage.onChanged.addListener((changes, area) => area === "local" && changes[SAVED_KEY] && showSavedCount());
 
   // Anki status, saved words and stats only matter when saving to Anki is on.
   if (!settings.ankiEnabled) return;

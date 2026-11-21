@@ -36,6 +36,7 @@
     check: ["M3 8.5l3 3 7-7"],
     retry: ["M13 8a5 5 0 1 1-1.5-3.5", "M13 2.5v3h-3"],
     alert: ["M8 2l6.5 11.5h-13z", "M8 6.5v3", "M8 11.5h.01"],
+    star: ["M8 2l1.8 3.7 4 .6-2.9 2.8.7 4L8 11.2 4.4 13.1l.7-4L2.2 6.3l4-.6z"],
   };
 
   function icon(name) {
@@ -288,6 +289,8 @@
         decks: [],
         deck: "",
         anki: { state: "idle", message: "" },
+        // Whether the word is in the saved words (☆); null until the background says.
+        saved: null,
         // Readings by text (the sentence and the word), so an edited text simply has none.
         furigana: new Map(),
       };
@@ -418,6 +421,27 @@
 
     // state: idle | checking | ready | duplicate | adding | added | error
     //        offline (Anki closed, adding saves the note for later) | queued (saved for later)
+    // Whether the shown word is saved (the ☆ is filled).
+    setSaved(saved) {
+      if (!this.state?.result) return;
+      this.state.saved = Boolean(saved);
+      if (!this.state.editing) this.render();
+    }
+
+    // Saves the word (with the card's edits) or removes it from the saved words.
+    toggleSave() {
+      const s = this.state;
+      if (s?.kind !== "word" || s.status !== "ready" || s.saved === null) return;
+      const card = this.getCard();
+      s.saved = !s.saved;
+      this.render();
+      (s.saved ? this.handlers.onSave(card) : this.handlers.onUnsave(card)).catch(() => {
+        if (this.state !== s) return;
+        s.saved = !s.saved;
+        this.render();
+      });
+    }
+
     setAnkiState(state, message = "") {
       if (!this.state) return;
       this.state.anki = { state, message };
@@ -536,6 +560,10 @@
         this.useBaseForm();
         return true;
       }
+      if (event.key === "s" || event.key === "S") {
+        this.toggleSave();
+        return true;
+      }
       if (event.key === "m" || event.key === "M") {
         this.toggleExpanded();
         return true;
@@ -634,6 +662,7 @@
         this.renderHeader(
           h("div", { class: "word", lang: result.sourceLang }, this.renderWord()),
           iconButton("speaker", "Listen (P)", () => this.playAudio()),
+          this.renderSaveButton(),
         ),
         h("div", { class: "meta" }, this.renderLanguage(), this.renderFrequency(), result.ipa && h("span", { class: "ipa" }, result.ipa)),
         this.renderBaseForm(),
@@ -645,6 +674,20 @@
         this.renderMoreToggle(),
         this.renderLink(),
       ];
+    }
+
+    // ☆ / ★: keeps the word on the Saved words page, with Anki or without.
+    renderSaveButton() {
+      const { saved } = this.state;
+      if (saved === null) return null;
+      const button = iconButton(
+        "star",
+        saved ? "Saved: click to remove it from your saved words (S)" : "Save the word (S)",
+        () => this.toggleSave(),
+        saved ? "icon-button save saved" : "icon-button save",
+      );
+      button.setAttribute("aria-pressed", String(saved));
+      return button;
     }
 
     // The word with furigana: the dictionary's reading, or else the one guessed for the word alone.
@@ -662,7 +705,7 @@
 
     // Keyboard hints for the card without Anki, which has no other footer.
     renderHints() {
-      const hints = [["M", this.expanded ? "less" : "more"], ["P", "listen"], this.state.result.base && ["B", "base form"], this.back && ["⌫", "back"], ["Esc", "close"]];
+      const hints = [["S", this.state.saved ? "unsave" : "save"], ["M", this.expanded ? "less" : "more"], ["P", "listen"], this.state.result.base && ["B", "base form"], this.back && ["⌫", "back"], ["Esc", "close"]];
       return h(
         "div",
         { class: "hints" },

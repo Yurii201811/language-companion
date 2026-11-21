@@ -19,13 +19,13 @@ test("isExtensionPage only matches the extension's own origin", () => {
 });
 
 test("content scripts get what the card and text in images need", () => {
-  for (const type of [MSG.LOOKUP, MSG.LOOKUP_DETAILS, MSG.PEEK, MSG.FURIGANA, MSG.GET_CARD_CSS, MSG.ANKI_DECKS, MSG.ANKI_ADD_NOTE, MSG.ANKI_CHECK_DUPLICATE, MSG.ANKI_BROWSE, MSG.OCR_SCAN, MSG.OCR_READ]) {
+  for (const type of [MSG.LOOKUP, MSG.LOOKUP_DETAILS, MSG.PEEK, MSG.FURIGANA, MSG.GET_CARD_CSS, MSG.ANKI_DECKS, MSG.ANKI_ADD_NOTE, MSG.ANKI_CHECK_DUPLICATE, MSG.ANKI_BROWSE, MSG.OCR_SCAN, MSG.OCR_READ, MSG.WORD_SAVE, MSG.WORD_UNSAVE, MSG.WORD_SAVED]) {
     assert.equal(allowed(type, contentScript, info), true, type);
   }
 });
 
 test("content scripts can't open other tabs in the reader or change Anki and the saved words", () => {
-  for (const type of [MSG.OPEN_READER, MSG.ANKI_STATUS, MSG.ANKI_CREATE_DECK, MSG.ANKI_MODELS, MSG.ANKI_MODEL_FIELDS, MSG.LOG_REMOVE, MSG.QUEUE_FLUSH]) {
+  for (const type of [MSG.OPEN_READER, MSG.ANKI_STATUS, MSG.ANKI_CREATE_DECK, MSG.ANKI_MODELS, MSG.ANKI_MODEL_FIELDS, MSG.LOG_REMOVE, MSG.QUEUE_FLUSH, MSG.SAVED_REMOVE]) {
     assert.equal(allowed(type, contentScript, info), false, type);
   }
 });

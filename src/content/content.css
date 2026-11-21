@@ -228,6 +228,14 @@
   fill: currentColor;
 }
 
+.save.saved {
+  color: var(--accent);
+}
+
+.save.saved .icon {
+  fill: currentColor;
+}
+
 .meta {
   display: flex;
   flex-wrap: wrap;

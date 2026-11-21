@@ -168,12 +168,30 @@ article td {
 
 /* Furigana: the reading sits in an attribute (see reader.js), so it is shown but is not part
    of the text that goes into the saved sentence. */
-article rt::before {
+main rt::before {
   content: attr(data-rt);
 }
 
-article rt {
+main rt {
   color: var(--muted);
+}
+
+/* A reading wider or narrower than its kanji is centered over them, keeping the kanji together. */
+main ruby {
+  ruby-align: center;
+}
+
+.no-furigana main rt {
+  display: none;
+}
+
+.toolbar button[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.toolbar button[hidden] {
+  display: none;
 }
 
 /* Clickable words */

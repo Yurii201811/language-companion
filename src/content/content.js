@@ -58,6 +58,8 @@
       handlers: {
         onTrigger: () => (offered ? runLookup(offered) : openFromSelection()),
         onAdd: (card) => addToAnki(card),
+        onSave: (card) => send(MSG.WORD_SAVE, { card }),
+        onUnsave: (card) => send(MSG.WORD_UNSAVE, { lang: card.sourceLang, word: card.word }),
         onOpenInAnki: (card) => send(MSG.ANKI_BROWSE, { card }).catch((error) => ui.setAnkiState("error", error.message)),
         // Same sentence and context, but the base word; the card remembers the original word.
         onUseBaseForm: (word) =>
@@ -142,6 +144,10 @@
     }
     if (id !== lookupId) return;
     card.setResult({ ...result, ...(request.surface ? { surface: request.surface } : {}) });
+    send(MSG.WORD_SAVED, { lang: result.sourceLang, word: result.word }).then(
+      (saved) => id === lookupId && card.setSaved(saved),
+      () => {},
+    );
     for (const text of [result.sentence, result.word]) {
       if (wantsFurigana(result.sourceLang, text)) readingsFor(text).then((readings) => id === lookupId && card.setFurigana(text, readings));
     }
@@ -185,7 +191,10 @@
     ui.setAnkiState("adding");
     try {
       const { duplicate, queued } = await send(MSG.ANKI_ADD_NOTE, { card: cardData });
-      if (id === lookupId) ui.setAnkiState(queued ? "queued" : duplicate ? "duplicate" : "added");
+      if (id !== lookupId) return;
+      ui.setAnkiState(queued ? "queued" : duplicate ? "duplicate" : "added");
+      // Words added to Anki are also saved (see the ANKI_ADD_NOTE handler).
+      if (!duplicate) ui.setSaved(true);
     } catch (error) {
       if (id === lookupId) ui.setAnkiState("error", error.message);
     }

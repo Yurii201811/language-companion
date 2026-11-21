@@ -45,9 +45,13 @@ If you use [Anki](https://apps.ankiweb.net/), you can also save words as flashca
 **Read and watch**
 
 - **Manga and webtoons:** on sites like Shonen Jump+, click a speech bubble and the card shows its text and translation. Click a word or drag across words to look them up, then go back to the bubble. It runs on your computer. Turn it on for a site in the toolbar menu
-- **Reader:** opens any article in a calm view where every word is clickable. This helps most with Japanese, which has no spaces between words
+- **Reader:** opens any article in a calm view where every word is clickable. This helps most with Japanese, which has no spaces between words. Japanese articles get furigana, which the ふ button hides when you want to read without
 - **Quick peek:** hold <kbd>Shift</kbd> over a word in the reader or in YouTube subtitles to see its reading and meaning
 - **YouTube:** click a word in the subtitles. The video pauses, and the subtitle line becomes the card's sentence
+
+**Keep what you learn**
+
+- ☆ on the card (or <kbd>S</kbd>) saves the word with its reading, meaning, sentence and source. The **Saved words** page (toolbar menu) lists them with search, and exports them as CSV. It works without Anki, and nothing leaves your browser
 
 **Optional: remember with Anki**
 
@@ -107,6 +111,7 @@ Select a word or a sentence and click the small **文A** button that appears. To
 | <kbd>B</kbd> | Look up the dictionary form instead |
 | <kbd>Backspace</kbd> | Back to the speech bubble (manga) |
 | <kbd>P</kbd> | Play the pronunciation |
+| <kbd>S</kbd> | Save the word (☆), or remove it again |
 | <kbd>Esc</kbd> | Close |
 
 The global shortcut can be changed in `about:addons` → ⚙ → **Manage Extension Shortcuts**. In the settings you can choose how the card opens (button, right away, or only by shortcut), turn sources on or off, and disable the extension on single sites.

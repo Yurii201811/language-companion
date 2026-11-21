@@ -5,6 +5,7 @@ import { lookupDetails, lookupTranslation, peekWord } from "./lookup.js";
 import { createFrequency } from "./frequency.js";
 import { getCached, setCached } from "./cache.js";
 import { flushQueue, loadLog, logAdded, queueNote, removeEntry } from "./word-log.js";
+import { isSaved, removeSaved, saveWord, unsaveWord } from "./saved-words.js";
 import * as ocr from "./ocr.js";
 import { sentenceFurigana, warmFurigana } from "./furigana.js";
 import { allowed } from "./senders.js";
@@ -159,6 +160,10 @@ function checkCard(card) {
   }
 }
 
+function checkSavedWord(lang, word) {
+  if (typeof lang !== "string" || typeof word !== "string" || !word.trim()) throw new Error("Invalid word.");
+}
+
 const handlers = {
   async [MSG.LOOKUP](message) {
     checkLookup(message);
@@ -232,12 +237,14 @@ const handlers = {
       await ensureNoteType(client, settings);
       const noteId = await client.addNote(note);
       await logAdded(card, note);
+      await saveWord(card);
       return { noteId };
     } catch (error) {
       if (/duplicate/i.test(error.message)) return { duplicate: true };
       if (!error.unreachable) throw error;
       // Anki is closed: keep the note and add it once Anki is open again.
       await queueNote(card, note);
+      await saveWord(card);
       scheduleFlush();
       return { queued: true };
     }
@@ -256,6 +263,21 @@ const handlers = {
   },
 
   [MSG.LOG_REMOVE]: ({ id }) => removeEntry(id),
+
+  // Saved words (saved-words.js): the card's ☆, and Delete on the Saved words page.
+  async [MSG.WORD_SAVE]({ card }) {
+    checkCard(card);
+    if (typeof card.sourceLang !== "string" || !card.sourceLang) throw new Error("Invalid card.");
+    await saveWord(card);
+    return true;
+  },
+  async [MSG.WORD_UNSAVE]({ lang, word }) {
+    checkSavedWord(lang, word);
+    await unsaveWord(lang, word);
+    return false;
+  },
+  [MSG.WORD_SAVED]: ({ lang, word }) => (checkSavedWord(lang, word), isSaved(lang, word)),
+  [MSG.SAVED_REMOVE]: ({ id }) => removeSaved(id),
 
   // Text in images (see ocr.js and content/image-text.js).
   [MSG.OCR_PERMISSION]: () => ocr.hasPermission(),

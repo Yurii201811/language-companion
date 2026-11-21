@@ -16,6 +16,10 @@ const FROM_CONTENT = new Set([
   MSG.ANKI_CHECK_DUPLICATE,
   MSG.ANKI_ADD_NOTE,
   MSG.ANKI_BROWSE,
+  // The card's ☆: save, unsave, and whether its word is saved (never the list itself).
+  MSG.WORD_SAVE,
+  MSG.WORD_UNSAVE,
+  MSG.WORD_SAVED,
   MSG.OCR_PERMISSION,
   MSG.OCR_SCAN,
   MSG.OCR_READ,

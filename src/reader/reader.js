@@ -101,41 +101,184 @@
   // over several text nodes gets one span per node, all with the same id. Other words (English
   // names, numbers) stay plain text.
   function wrapWords(root, learning) {
-    for (const [block, nodes] of textBlocks(root)) {
-      const lang = block.closest("[lang]")?.lang ?? "";
-      const text = nodes.map((node) => node.data).join("");
-      const starts = [];
-      nodes.reduce((offset, node) => (starts.push(offset), offset + node.data.length), 0);
-      const pieces = nodes.map(() => []);
+    for (const [block, nodes] of textBlocks(root)) wrapBlock(block, nodes, learning);
+  }
 
-      for (const { segment, index, isWordLike } of segmenter(lang).segment(text)) {
-        if (!isWordLike || !languages.isLearned(segment, learning)) continue;
-        const id = String(nextWordId++);
-        const end = index + segment.length;
-        nodes.forEach((node, i) => {
-          const from = Math.max(index, starts[i]);
-          const to = Math.min(end, starts[i] + node.data.length);
-          if (from < to) pieces[i].push({ from: from - starts[i], to: to - starts[i], id });
-        });
-      }
+  // The start of each text node in the text of all of them together.
+  function offsets(nodes) {
+    const starts = [];
+    nodes.reduce((offset, node) => (starts.push(offset), offset + node.data.length), 0);
+    return starts;
+  }
 
+  function wrapBlock(block, nodes, learning) {
+    const lang = block.closest("[lang]")?.lang ?? "";
+    const text = nodes.map((node) => node.data).join("");
+    const starts = offsets(nodes);
+    const pieces = nodes.map(() => []);
+
+    for (const { segment, index, isWordLike } of segmenter(lang).segment(text)) {
+      if (!isWordLike || !languages.isLearned(segment, learning)) continue;
+      const id = String(nextWordId++);
+      const end = index + segment.length;
       nodes.forEach((node, i) => {
-        if (!pieces[i].length) return;
-        const fragment = document.createDocumentFragment();
-        let at = 0;
-        for (const { from, to, id } of pieces[i]) {
-          if (from > at) fragment.append(node.data.slice(at, from));
-          const span = document.createElement("span");
-          span.className = WORD_CLASS;
-          span.dataset.w = id;
-          span.textContent = node.data.slice(from, to);
-          fragment.append(span);
-          at = to;
-        }
-        if (at < node.data.length) fragment.append(node.data.slice(at));
-        node.replaceWith(fragment);
+        const from = Math.max(index, starts[i]);
+        const to = Math.min(end, starts[i] + node.data.length);
+        if (from < to) pieces[i].push({ from: from - starts[i], to: to - starts[i], id });
       });
     }
+
+    nodes.forEach((node, i) => {
+      if (!pieces[i].length) return;
+      const fragment = document.createDocumentFragment();
+      let at = 0;
+      for (const { from, to, id } of pieces[i]) {
+        if (from > at) fragment.append(node.data.slice(at, from));
+        const span = document.createElement("span");
+        span.className = WORD_CLASS;
+        span.dataset.w = id;
+        span.textContent = node.data.slice(from, to);
+        fragment.append(span);
+        at = to;
+      }
+      if (at < node.data.length) fragment.append(node.data.slice(at));
+      node.replaceWith(fragment);
+    });
+  }
+
+  // --- Furigana -------------------------------------------------------------------------------
+
+  // Readings over the kanji of Japanese articles, from the background (kuromoji, see
+  // background/furigana.js), added a paragraph at a time as it comes near the screen. They use the
+  // markup of a page's own furigana (an empty <rt data-rt>), so the words and the sentence that
+  // goes to the card stay without readings.
+
+  // Below the background's limit per request; longer paragraphs go in parts, cut after a sentence.
+  const FURIGANA_CHUNK = 900;
+  const SHOW_FURIGANA_KEY = "lc-reader-furigana";
+  let furiganaFailed = false;
+
+  async function sentenceReadings(text) {
+    const response = await browser.runtime.sendMessage({ type: LC.MSG.FURIGANA, text });
+    if (!response?.ok) throw new Error(response?.error ?? "No furigana.");
+    return response.data;
+  }
+
+  function chunks(text) {
+    const result = [];
+    for (let start = 0; start < text.length; ) {
+      let end = Math.min(text.length, start + FURIGANA_CHUNK);
+      if (end < text.length) {
+        const last = [...text.slice(start, end).matchAll(new RegExp(languages.sentenceBreak.source, "g"))].at(-1);
+        if (last) end = start + last.index + last[0].length;
+      }
+      result.push({ start, text: text.slice(start, end) });
+      start = end;
+    }
+    return result;
+  }
+
+  // [{ start, end, rt }] over the whole text.
+  async function readingsFor(text) {
+    const ranges = [];
+    for (const chunk of chunks(text)) {
+      if (!LC.furigana.hasKanji(chunk.text)) continue;
+      for (const r of await sentenceReadings(chunk.text)) ranges.push({ ...r, start: r.start + chunk.start, end: r.end + chunk.start });
+    }
+    return ranges;
+  }
+
+  // The block's own text nodes (not those of blocks inside it), as textBlocks groups them.
+  const ownText = (block) => textBlocks(block).get(block) ?? [];
+
+  // Puts each reading's kanji in <ruby> with an <rt data-rt>. A reading across two text nodes
+  // (part of it in a link, say) is left out.
+  function insertRuby(nodes, ranges) {
+    const starts = offsets(nodes);
+    for (const { start, end, rt } of [...ranges].reverse()) {
+      const i = starts.findLastIndex((s) => s <= start);
+      const node = nodes[i];
+      if (!node || end > starts[i] + node.data.length) continue;
+      // From the end backwards, so `node` keeps the text before and its start stays valid.
+      node.splitText(end - starts[i]);
+      const base = node.splitText(start - starts[i]);
+      const ruby = document.createElement("ruby");
+      const reading = document.createElement("rt");
+      reading.dataset.rt = rt;
+      base.replaceWith(ruby);
+      ruby.append(base, reading);
+    }
+  }
+
+  // Whether the page gave the block's text its own furigana (blocks inside it don't count).
+  const hasOwnReadings = (block) => [...block.querySelectorAll("rt")].some((rt) => rt.closest(BLOCK_SELECTOR) === block);
+
+  async function addReadings(block, learning) {
+    if (furiganaFailed || !block.isConnected || hasOwnReadings(block)) return;
+    const text = ownText(block).map((node) => node.data).join("");
+    if (!LC.furigana.hasKanji(text)) return;
+    let ranges;
+    try {
+      ranges = await readingsFor(text);
+    } catch {
+      // The dictionary couldn't be downloaded, or furigana is off: no need to ask for every paragraph.
+      furiganaFailed = true;
+      return;
+    }
+    if (!ranges.length || !block.isConnected) return;
+    // Take the block's words apart, put the readings in, and find the words again; words split by
+    // a <ruby> get one span per part, as with a page's own furigana.
+    for (const span of block.querySelectorAll(`.${WORD_CLASS}`)) {
+      if (span.closest(BLOCK_SELECTOR) === block) span.replaceWith(...span.childNodes);
+    }
+    block.normalize();
+    const nodes = ownText(block);
+    if (nodes.map((node) => node.data).join("") !== text) return;
+    insertRuby(nodes, ranges);
+    wrapBlock(block, ownText(block), learning);
+  }
+
+  // Adds readings to the blocks of the roots as they come within about a screen of view, one
+  // block after another, the first ones on screen first.
+  function addReadingsNearView(roots, learning) {
+    let queue = Promise.resolve();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const { isIntersecting, target } of entries) {
+          if (!isIntersecting) continue;
+          observer.unobserve(target);
+          queue = queue.then(() => addReadings(target, learning));
+        }
+      },
+      { rootMargin: "100% 0px" },
+    );
+    for (const root of roots) for (const block of textBlocks(root).keys()) observer.observe(block);
+  }
+
+  // The ふ button shows or hides all readings, the page's own too, so a text can be read without.
+  function setupFuriganaToggle() {
+    const button = $("#furigana");
+    const apply = (shown) => {
+      document.documentElement.classList.toggle("no-furigana", !shown);
+      button.setAttribute("aria-pressed", String(shown));
+    };
+    let shown = true;
+    try {
+      shown = localStorage.getItem(SHOW_FURIGANA_KEY) !== "off";
+    } catch {
+      // Only a convenience.
+    }
+    apply(shown);
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      shown = !shown;
+      apply(shown);
+      try {
+        localStorage.setItem(SHOW_FURIGANA_KEY, shown ? "on" : "off");
+      } catch {
+        // Only a convenience.
+      }
+    });
   }
 
   const wordAt = (target) => (target instanceof Element ? target.closest(`.${WORD_CLASS}`) : null);
@@ -258,6 +401,10 @@
     }
     wrapWords($("#title"), settings.learning);
     wrapWords($("#article"), settings.learning);
+    if (lang === "ja") {
+      setupFuriganaToggle();
+      if (settings.furigana) addReadingsNearView([$("#title"), $("#article")], settings.learning);
+    }
   }
 
   init();
