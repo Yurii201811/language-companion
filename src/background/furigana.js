@@ -83,11 +83,21 @@ export function createTokenizer({ files = dictFile } = {}) {
 // The tokenizer is built once; a failed download is retried on the next request.
 let tokenizer = null;
 
-export async function sentenceFurigana(text) {
-  if (!furigana.hasKanji(text)) return [];
+function getTokenizer() {
   if (!tokenizer) {
     tokenizer = createTokenizer();
     tokenizer.catch(() => (tokenizer = null));
   }
-  return rubyRanges(text, (await tokenizer).tokenize(text));
+  return tokenizer;
+}
+
+// Starts building the tokenizer ahead of the first request. Firefox unloads an idle background,
+// so after a pause the build (about a second) would otherwise start only once readings are asked for.
+export function warmFurigana() {
+  getTokenizer().catch(() => {});
+}
+
+export async function sentenceFurigana(text) {
+  if (!furigana.hasKanji(text)) return [];
+  return rubyRanges(text, (await getTokenizer()).tokenize(text));
 }

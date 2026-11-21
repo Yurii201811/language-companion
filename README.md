@@ -95,7 +95,7 @@ npm start
 
 ## Usage
 
-Select a word or a sentence and click the small **文A** button that appears. To open the card right away instead, choose "Open the card immediately" in the settings under Behavior. In the reader (toolbar button → **Open in reader**), just click any word.
+Select a word or a sentence and click the small **文A** button that appears. To open the card right away instead, choose "Open the card immediately" in the settings under Behavior. In the reader (toolbar button → **Open in reader**), just click any word. For Japanese, the card shows furigana over the kanji of the word and its sentence; the first time, a 17 MB dictionary is downloaded. It can be turned off in the settings under "Translation & dictionaries".
 
 | Key | Action |
 | --- | --- |
@@ -111,7 +111,7 @@ Select a word or a sentence and click the small **文A** button that appears. To
 
 The global shortcut can be changed in `about:addons` → ⚙ → **Manage Extension Shortcuts**. In the settings you can choose how the card opens (button, right away, or only by shortcut), turn sources on or off, and disable the extension on single sites.
 
-**Manga and webtoons:** Shonen Jump+ is on by default; for other sites, open the toolbar menu there and turn on "Read text in images". Firefox asks once for permission to access all websites, which it requires before an extension may capture the visible part of a tab. The first time, the text recognition models are downloaded (about 120 MB for Japanese, 20 MB for Korean), with the progress in the page's corner. After each page turn, the speech bubbles light up briefly; later they show an outline when you point at them. Click one and the card shows its text and translation; to click the page under a bubble, hold <kbd>Ctrl</kbd> or <kbd>⌘</kbd>. Click a word, drag across several, or Shift+click to extend, and the card shows that word, with ← (or <kbd>Backspace</kbd>) back to the bubble. Downloaded models and sites can be managed in the settings under "Text in images", where you can also turn on furigana over the kanji in Japanese bubbles (downloads a 17 MB dictionary once). Each bubble takes about a second to read; reading starts as soon as a page appears, so the next bubbles are usually ready.
+**Manga and webtoons:** Shonen Jump+ is on by default; for other sites, open the toolbar menu there and turn on "Read text in images". Firefox asks once for permission to access all websites, which it requires before an extension may capture the visible part of a tab. The first time, the text recognition models are downloaded (about 120 MB for Japanese, 20 MB for Korean), with the progress in the page's corner. After each page turn, the speech bubbles light up briefly; later they show an outline when you point at them. Click one and the card shows its text and translation; to click the page under a bubble, hold <kbd>Ctrl</kbd> or <kbd>⌘</kbd>. Text the site itself shows (titles, comments, menus) gets no bubbles and can be selected as usual, also when a selection crosses a bubble. Click a word, drag across several, or Shift+click to extend, and the card shows that word, with ← (or <kbd>Backspace</kbd>) back to the bubble. Downloaded models and sites can be managed in the settings under "Text in images". Japanese bubbles show furigana over the kanji, like the card's sentence. Each bubble takes about a second to read; reading starts as soon as a page appears, so the next bubbles are usually ready.
 
 **YouTube:** turn on subtitles in the player (any track, including auto-generated ones) and click a word. The card works in fullscreen, and the video resumes when it closes.
 
@@ -243,7 +243,7 @@ Language Companion is built on the work of these projects:
 - [manga-ocr](https://github.com/kha-white/manga-ocr) by Maciej Budyś, reading Japanese manga, Apache-2.0
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) by PaddlePaddle, finding text in images and reading Korean, Apache-2.0
 - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) by Microsoft, which runs these models in the browser, MIT
-- [kuromoji.js](https://github.com/takuyaa/kuromoji.js) by Takuya Asano, with the [IPADIC](https://github.com/taku910/mecab) dictionary, furigana in speech bubbles, Apache-2.0
+- [kuromoji.js](https://github.com/takuyaa/kuromoji.js) by Takuya Asano, with the [IPADIC](https://github.com/taku910/mecab) dictionary, furigana over Japanese sentences, Apache-2.0
 - [Readability](https://github.com/mozilla/readability) by Mozilla, the reader's article extraction, Apache-2.0
 - [AnkiConnect](https://ankiweb.net/shared/info/2055492159), which makes the Anki parts possible
 

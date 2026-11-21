@@ -82,6 +82,9 @@
   // Whether a manga page is on screen.
   let reading = false;
   let watchTimer = null;
+  // Bubbles let presses through to the page while Ctrl or Cmd is held, while the user drags on the
+  // page (selecting text there), and while scan() looks for page text under them.
+  const through = { key: false, drag: false, check: false };
 
   async function send(type, payload = {}) {
     const response = await browser.runtime.sendMessage({ type, ...payload });
@@ -124,6 +127,11 @@
       layer.append(element("style", { textContent: LAYER_STYLE }));
     }
     attach(layer);
+    updateThrough();
+  }
+
+  function updateThrough() {
+    layer?.toggleAttribute("data-through", through.key || through.drag || through.check);
   }
 
   function clearBubbles() {
@@ -296,15 +304,20 @@
 
   // Elements that show a picture, including viewers that use a background image.
   function pictures() {
-    const found = new Set(document.querySelectorAll("img, canvas, svg, iframe"));
+    const found = new Set([...document.querySelectorAll("img, canvas, svg, iframe")].filter(visible));
     for (const x of [0.25, 0.5, 0.75]) {
       for (const y of [0.25, 0.5, 0.75]) {
         for (const node of document.elementsFromPoint(window.innerWidth * x, window.innerHeight * y)) {
-          if (node !== document.body && node !== document.documentElement && getComputedStyle(node).backgroundImage.startsWith("url(")) found.add(node);
+          if (node !== document.body && node !== document.documentElement && getComputedStyle(node).backgroundImage.startsWith("url(") && visible(node)) found.add(node);
         }
       }
     }
     return found;
+  }
+
+  // Hidden pictures (preloaded pages, ads behind the viewer) don't make a page.
+  function visible(node) {
+    return node.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? true;
   }
 
   // The visible parts of the large pictures on screen, or nothing if they don't add up to a manga page.
@@ -340,6 +353,27 @@
       const { width, height } = link.getBoundingClientRect();
       return width * height < MAX_LINK_SHARE * window.innerWidth * window.innerHeight;
     });
+  }
+
+  // Text the page itself shows there (HTML, not part of a picture), which can just be selected.
+  // Only pictures get bubbles; on a site's own text they would be in the way of selecting it.
+  function onPageText({ box }) {
+    const horizontal = box.width >= box.height;
+    const points = [0.25, 0.5, 0.75].map((t) =>
+      horizontal ? [box.x + box.width * t, box.y + box.height / 2] : [box.x + box.width / 2, box.y + box.height * t],
+    );
+    return points.some(([x, y]) => textAt(x, y));
+  }
+
+  function textAt(x, y) {
+    const caret = document.caretPositionFromPoint?.(x, y);
+    const node = caret?.offsetNode;
+    if (node?.nodeType !== Node.TEXT_NODE || !node.data.trim() || inLayer(node) || LC.companion.contains(node.parentElement)) return false;
+    // The caret is the nearest position, which may be beside the text: check the point is on a letter.
+    const range = document.createRange();
+    range.setStart(node, Math.max(0, caret.offset - 1));
+    range.setEnd(node, Math.min(node.length, caret.offset + 1));
+    return [...range.getClientRects()].some((rect) => x >= rect.left - 1 && x <= rect.right + 1 && y >= rect.top - 1 && y <= rect.bottom + 1);
   }
 
   // Starts reading when a page appears, and stops when the user leaves it for the rest of the site.
@@ -390,7 +424,17 @@
       captureId = result.captureId;
       ensureLayer();
       layer.lang = lang;
-      bubbles = groupBubbles(result.lines.filter((line) => onPage(line, rects) && !onLink(line)));
+      // Bubbles of an earlier scan may still be there (rescan), and must not hide the page's text.
+      through.check = true;
+      updateThrough();
+      let lines;
+      try {
+        lines = result.lines.filter((line) => onPage(line, rects) && !onLink(line) && !onPageText(line));
+      } finally {
+        through.check = false;
+        updateThrough();
+      }
+      bubbles = groupBubbles(lines);
       showBubbles();
       readAll(scanned);
     } catch (error) {
@@ -437,11 +481,39 @@
 
   // Bubbles sit on top of the page. With Ctrl or Cmd held, clicks go to the page instead.
   function clickThrough(event) {
-    if (event.isTrusted && (event.key === "Control" || event.key === "Meta")) layer?.toggleAttribute("data-through", event.type === "keydown");
+    if (!event.isTrusted || (event.key !== "Control" && event.key !== "Meta")) return;
+    through.key = event.type === "keydown";
+    updateThrough();
   }
   window.addEventListener("keydown", clickThrough, true);
   window.addEventListener("keyup", clickThrough, true);
-  window.addEventListener("blur", () => layer?.removeAttribute("data-through"));
+
+  // A press on the page (not on a bubble) may start selecting text: until it ends, bubbles let the
+  // drag through, so the selection can go across them and the mouseup reaches the page and
+  // content.js, which offers the selection.
+  window.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (!event.isTrusted || !active || event.button !== 0 || inLayer(event.target)) return;
+      through.drag = true;
+      updateThrough();
+    },
+    true,
+  );
+  function endDrag() {
+    if (!through.drag) return;
+    // After the mouseup and click that belong to this press, which go to the same target.
+    setTimeout(() => {
+      through.drag = false;
+      updateThrough();
+    }, 0);
+  }
+  window.addEventListener("pointerup", endDrag, true);
+  window.addEventListener("pointercancel", endDrag, true);
+  window.addEventListener("blur", () => {
+    through.key = through.drag = false;
+    updateThrough();
+  });
 
   // Anything that may change what's on screen. Events on the extension's own UI don't count.
   function onPageEvent(event) {

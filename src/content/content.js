@@ -34,8 +34,20 @@
     return settings && !LC.settings.isSiteDisabled(settings, location.hostname);
   }
 
+  // The bubble card explains how to pick words until the user has picked one.
+  const PICK_HINT_SEEN_KEY = "bubblePickHintSeen";
+  let pickHintSeen = false;
+  browser.storage.local.get(PICK_HINT_SEEN_KEY).then((stored) => (pickHintSeen = Boolean(stored[PICK_HINT_SEEN_KEY])), () => {});
+
   function cardOptions() {
-    return { showSentenceTranslation: settings.showSentenceTranslation, anki: settings.ankiEnabled };
+    return { showSentenceTranslation: settings.showSentenceTranslation, anki: settings.ankiEnabled, pickHint: !pickHintSeen };
+  }
+
+  function sawPickHint() {
+    if (pickHintSeen) return;
+    pickHintSeen = true;
+    browser.storage.local.set({ [PICK_HINT_SEEN_KEY]: true }).catch(() => {});
+    ui?.setOptions(cardOptions());
   }
 
   async function getUI() {
@@ -63,8 +75,10 @@
         },
         onRetry: () => lastRequest && runLookup(lastRequest),
         // Words picked in a speech bubble: the bubble is the sentence, and Back returns to it.
-        onSentenceSelect: ({ text, sentence, lang, context }) =>
-          runLookup({ text, sentence, pageLang: lang, sourceLang: lang, context, rect: ui.card.getBoundingClientRect(), fromSentence: true }),
+        onSentenceSelect: ({ text, sentence, lang, context }) => {
+          sawPickHint();
+          return runLookup({ text, sentence, pageLang: lang, sourceLang: lang, context, rect: ui.card.getBoundingClientRect(), fromSentence: true });
+        },
       },
     });
     return ui;
@@ -112,6 +126,12 @@
     };
     // Details (dictionaries, examples) are slower, so they fill in once the card is shown.
     const details = send(MSG.LOOKUP_DETAILS, payload).catch((error) => ({ errors: [error.message] }));
+    // Readings are asked for alongside the lookup rather than after it. The result's language is
+    // only known later, so this goes by the script; the result below then reuses the cached request.
+    const likelyLang = request.sourceLang ?? languages.byScript([request.text, request.sentence]);
+    if (settings.learning.includes("ja")) {
+      for (const text of [request.sentence, request.text]) if (wantsFurigana(likelyLang, text)) readingsFor(text);
+    }
 
     let result;
     try {
@@ -122,6 +142,9 @@
     }
     if (id !== lookupId) return;
     card.setResult({ ...result, ...(request.surface ? { surface: request.surface } : {}) });
+    for (const text of [result.sentence, result.word]) {
+      if (wantsFurigana(result.sourceLang, text)) readingsFor(text).then((readings) => id === lookupId && card.setFurigana(text, readings));
+    }
     const detailsShown = details.then((data) => id === lookupId && card.setDetails(data));
     // Without Anki the card only translates.
     if (!settings.ankiEnabled) return;
@@ -179,19 +202,24 @@
   // Translations of speech bubbles, so going back to a bubble doesn't translate it again.
   const bubbleTranslations = new Map();
 
-  // Readings over a bubble's kanji, kept like the translations. The first time, the background
-  // downloads its dictionary; until then, or if that fails, the bubble just has no furigana.
-  const bubbleFurigana = new Map();
+  // Readings over the kanji of a text ([{ start, end, rt }]), for bubbles and the card's sentence
+  // and word. The first time, the background downloads its dictionary; until then, or if that
+  // fails, there is just no furigana.
+  const furiganaCache = new Map();
 
-  async function addFurigana(card, view, text) {
-    if (!bubbleFurigana.has(text)) {
+  function readingsFor(text) {
+    if (!furiganaCache.has(text)) {
       const ranges = send(MSG.FURIGANA, { text }).catch(() => {
-        bubbleFurigana.delete(text);
+        furiganaCache.delete(text);
         return [];
       });
-      bubbleFurigana.set(text, ranges);
+      furiganaCache.set(text, ranges);
     }
-    card.setSentenceFurigana(view, await bubbleFurigana.get(text));
+    return furiganaCache.get(text);
+  }
+
+  function wantsFurigana(lang, text) {
+    return Boolean(settings.furigana && lang === "ja" && LC.furigana.hasKanji(text));
   }
 
   // Opens the card on a speech bubble (image-text.js). Its text comes later through the returned
@@ -204,7 +232,7 @@
       setText: async (text) => {
         card.setSentenceText(view, text);
         if (!text) return;
-        if (settings.bubbleFurigana && lang === "ja" && LC.furigana.hasKanji(text)) addFurigana(card, view, text);
+        if (wantsFurigana(lang, text)) readingsFor(text).then((readings) => card.setSentenceFurigana(view, readings));
         if (!bubbleTranslations.has(text)) {
           bubbleTranslations.set(
             text,

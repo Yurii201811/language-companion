@@ -319,6 +319,22 @@
   line-height: 1.6;
 }
 
+/* A reading wider or narrower than its kanji is centered over them; the default spreads the
+   narrower side out, which splits words like 優秀 into 優 秀. */
+ruby {
+  ruby-align: center;
+}
+
+/* Room above each line for the readings. */
+.sentence.with-furigana {
+  line-height: 2.1;
+}
+
+.sentence rt {
+  font-size: 9px;
+  color: var(--muted);
+}
+
 .sentence mark {
   background: var(--mark);
   color: inherit;
@@ -365,6 +381,10 @@
   gap: var(--space-2);
   margin: 2px 0;
   font-size: 13px;
+}
+
+.okurigana {
+  opacity: 0.6;
 }
 
 .kanji-char {

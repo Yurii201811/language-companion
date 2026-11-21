@@ -6,7 +6,7 @@ import { createFrequency } from "./frequency.js";
 import { getCached, setCached } from "./cache.js";
 import { flushQueue, loadLog, logAdded, queueNote, removeEntry } from "./word-log.js";
 import * as ocr from "./ocr.js";
-import { sentenceFurigana } from "./furigana.js";
+import { sentenceFurigana, warmFurigana } from "./furigana.js";
 import { allowed } from "./senders.js";
 
 const { MSG, settings: settingsStore } = globalThis.LC;
@@ -170,11 +170,11 @@ const handlers = {
     return peekWord(message, await settingsStore.getSettings(), lookupContext);
   },
 
-  // Readings over the kanji of a speech bubble. Only while the setting is on, so a page can't
-  // start the dictionary download.
+  // Readings over the kanji of a sentence (card or speech bubble). Only while the setting is on,
+  // so a page can't start the dictionary download.
   async [MSG.FURIGANA]({ text }) {
     if (typeof text !== "string" || !text.trim() || text.length > MAX_SENTENCE_LENGTH) throw new Error("Invalid text.");
-    if (!(await settingsStore.getSettings()).bubbleFurigana) return [];
+    if (!(await settingsStore.getSettings()).furigana) return [];
     return sentenceFurigana(text);
   },
 
@@ -259,7 +259,12 @@ const handlers = {
 
   // Text in images (see ocr.js and content/image-text.js).
   [MSG.OCR_PERMISSION]: () => ocr.hasPermission(),
-  [MSG.OCR_SCAN]: (message, sender) => ocr.scan(message, sender),
+  async [MSG.OCR_SCAN](message, sender) {
+    const result = await ocr.scan(message, sender);
+    // Bubbles get furigana once read; the tokenizer builds meanwhile instead of after reading.
+    if (message.lang === "ja" && (await settingsStore.getSettings()).furigana) warmFurigana();
+    return result;
+  },
   [MSG.OCR_READ]: (message, sender) => ocr.read(message, sender),
 };
 

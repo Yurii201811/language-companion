@@ -76,25 +76,49 @@
     return joined;
   }
 
-  // One bubble word with its readings over the kanji.
-  function tokenWithReadings(token, readings) {
-    const parts = [];
-    let at = token.start;
-    for (const r of readings) {
-      if (r.start < at || r.end > token.end) continue;
-      if (r.start > at) parts.push(token.text.slice(at - token.start, r.start - token.start));
-      parts.push(h("ruby", {}, token.text.slice(r.start - token.start, r.end - token.start), h("rt", {}, r.rt)));
-      at = r.end;
+  // Text with readings ({ start, end, rt }) in <ruby> over the kanji, and the part in mark
+  // ({ start, end } or null) wrapped in <mark>.
+  function withReadings(text, readings = [], mark = null) {
+    const nodes = [];
+    let marked = null;
+    for (const piece of furigana.pieces(text, readings, mark)) {
+      const node = piece.rt ? h("ruby", {}, piece.text, h("rt", {}, piece.rt)) : piece.text;
+      if (!piece.marked) {
+        marked = null;
+        nodes.push(node);
+      } else if (marked) {
+        marked.append(node);
+      } else {
+        marked = h("mark", {}, node);
+        nodes.push(marked);
+      }
     }
-    if (at < token.end) parts.push(token.text.slice(at - token.start));
-    return parts;
+    return nodes;
   }
 
-  // Renders `sentence` with the first occurrence of `word` wrapped in <mark>.
-  function highlighted(sentence, word) {
+  // KANJIDIC marks the kana written after the kanji with a dot (す.べて for 全て): shown without
+  // the dot, with those kana fainter.
+  function withOkurigana(readings) {
+    return readings.split(/([^\s、・·.]+\.[^\s、・·.]+)/).flatMap((part, i) => {
+      if (i % 2 === 0) return part;
+      const [stem, rest] = part.split(".");
+      return [stem, h("span", { class: "okurigana" }, rest)];
+    });
+  }
+
+  // One bubble word with its readings over the kanji.
+  function tokenWithReadings(token, readings) {
+    const inside = readings
+      .filter((r) => r.start >= token.start && r.end <= token.end)
+      .map((r) => ({ ...r, start: r.start - token.start, end: r.end - token.start }));
+    return withReadings(token.text, inside);
+  }
+
+  // Renders `sentence` with the first occurrence of `word` wrapped in <mark>, and readings over
+  // its kanji when known.
+  function highlighted(sentence, word, readings = []) {
     const index = word ? sentence.toLowerCase().indexOf(word.toLowerCase()) : -1;
-    if (index < 0) return [sentence];
-    return [sentence.slice(0, index), h("mark", {}, sentence.slice(index, index + word.length)), sentence.slice(index + word.length)];
+    return withReadings(sentence, readings, index < 0 ? null : { start: index, end: index + word.length });
   }
 
   class CompanionUI {
@@ -264,6 +288,8 @@
         decks: [],
         deck: "",
         anki: { state: "idle", message: "" },
+        // Readings by text (the sentence and the word), so an edited text simply has none.
+        furigana: new Map(),
       };
       this.render();
     }
@@ -346,6 +372,13 @@
         selectedExample: -1,
       });
       this.render();
+    }
+
+    // Readings over the kanji of the result's sentence or word: [{ start, end, rt }].
+    setFurigana(text, readings) {
+      if (!this.state?.result || !readings?.length) return;
+      this.state.furigana.set(text, readings);
+      if (!this.state.editing) this.render();
     }
 
     setDetails(details) {
@@ -599,7 +632,7 @@
       const translation = result.translation || (result.sourceLang === result.targetLang ? "" : "—");
       return [
         this.renderHeader(
-          h("div", { class: "word", lang: result.sourceLang }, withFurigana(result.word, result.reading)),
+          h("div", { class: "word", lang: result.sourceLang }, this.renderWord()),
           iconButton("speaker", "Listen (P)", () => this.playAudio()),
         ),
         h("div", { class: "meta" }, this.renderLanguage(), this.renderFrequency(), result.ipa && h("span", { class: "ipa" }, result.ipa)),
@@ -612,6 +645,13 @@
         this.renderMoreToggle(),
         this.renderLink(),
       ];
+    }
+
+    // The word with furigana: the dictionary's reading, or else the one guessed for the word alone.
+    renderWord() {
+      const { result, furigana: readings } = this.state;
+      if (result.reading) return withFurigana(result.word, result.reading);
+      return withReadings(result.word, readings.get(result.word));
     }
 
     renderLink() {
@@ -662,7 +702,8 @@
             ? h("span", { class: "skeleton inline", "aria-label": "Translating…", role: "status" }, h("span", { class: "bar" }))
             : [h("span", {}, s.translation || "No translation available."), s.translation && this.copyButton(s.translation, "Copy the translation")],
         ),
-        h("div", { class: "hints" }, h("span", {}, "Click a word, or drag across words for a phrase. ", h("kbd", {}, "Shift"), " + click extends it.")),
+        this.options.pickHint &&
+          h("div", { class: "hints" }, h("span", {}, "Click a word, or drag across words for a phrase. ", h("kbd", {}, "Shift"), " + click extends it.")),
       ];
     }
 
@@ -754,12 +795,17 @@
     renderSentence() {
       const { result, sentenceTranslationShown } = this.state;
       if (!result.sentence) return null;
+      const readings = this.state.furigana.get(result.sentence);
       const translation = result.sentenceTranslation;
       const shown = sentenceTranslationShown || this.options.showSentenceTranslation;
       return h(
         "div",
         { class: "sentence-block" },
-        h("div", { class: "sentence", lang: result.sourceLang }, highlighted(result.sentence, result.surface || result.word)),
+        h(
+          "div",
+          { class: readings ? "sentence with-furigana" : "sentence", lang: result.sourceLang },
+          highlighted(result.sentence, result.surface || result.word, readings),
+        ),
         translation &&
           (shown
             ? h("div", { class: "sentence-translation" }, h("span", {}, translation), this.copyButton(translation, "Copy the sentence translation"))
@@ -844,7 +890,7 @@
             "div",
             { class: "kanji" },
             h("span", { class: "kanji-char", lang: "ja" }, character),
-            h("span", {}, meanings, (on || kun) && h("span", { class: "muted", lang: "ja" }, `  ${[on, kun].filter(Boolean).join(" · ")}`)),
+            h("span", {}, meanings, (on || kun) && h("span", { class: "muted", lang: "ja" }, "  ", withOkurigana([on, kun].filter(Boolean).join(" · ")))),
           ),
         ),
       );
