@@ -8,6 +8,8 @@
   const GAP = 6;
   const CSS = `
     :host { all: initial; }
+    /* all: initial would otherwise override the hidden attribute, and the tooltip would stay. */
+    :host([hidden]) { display: none; }
     .peek {
       position: fixed; z-index: 2147483647; max-width: 320px; padding: 6px 10px; border-radius: 8px;
       background: #1f1f22; color: #ececf0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);

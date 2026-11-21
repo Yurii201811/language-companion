@@ -4,6 +4,10 @@ All notable changes to Language Companion. The format follows [Keep a Changelog]
 
 ## [Unreleased]
 
+### Fixed
+
+- The quick peek tooltip (Shift over a word) now disappears when Shift is released; before, it stayed on screen until the next peek
+
 ## [0.6.0] - 2026-11-21
 
 ### Added

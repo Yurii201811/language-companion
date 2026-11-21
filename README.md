@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="store/screenshots/1-japanese-reader.png" width="800" alt="A Japanese article in the reader with the lookup card open on 食べました, showing the dictionary form 食べる, the JLPT N5 badge and the meaning">
+  <img src="store/screenshots/1-japanese-reader.png" width="800" alt="A Japanese article in the reader with furigana over the kanji, and the lookup card on 食べました: saved with the star, the dictionary form 食べる, the JLPT N5 badge, the meaning and the sentence with furigana">
 </p>
 
 Language Companion is a Firefox extension for learners of Japanese and Korean who read real content: news, blogs, novels, manga, YouTube. Select a word or a sentence you don't understand and see what it means *right there*, with its reading, dictionary form and the translation of the sentence around it. You never leave the page.
@@ -49,9 +49,17 @@ If you use [Anki](https://apps.ankiweb.net/), you can also save words as flashca
 - **Quick peek:** hold <kbd>Shift</kbd> over a word in the reader or in YouTube subtitles to see its reading and meaning
 - **YouTube:** click a word in the subtitles. The video pauses, and the subtitle line becomes the card's sentence
 
+<p align="center">
+  <img src="store/screenshots/2-manga-bubble.png" width="800" alt="A manga page with the speech bubble 今日は雨が降っているね outlined, and the card showing its text with furigana and the translation">
+</p>
+
 **Keep what you learn**
 
 - ☆ on the card (or <kbd>S</kbd>) saves the word with its reading, meaning, sentence and source. The **Saved words** page (toolbar menu) lists them with search, and exports them as CSV. It works without Anki, and nothing leaves your browser
+
+<p align="center">
+  <img src="store/screenshots/4-saved-words.png" width="800" alt="The Saved words page: 食べました, 過ごす and 喫茶店 with furigana, their meanings, the sentences they were found in and a link back to the article">
+</p>
 
 **Optional: remember with Anki**
 

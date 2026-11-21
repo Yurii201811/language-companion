@@ -68,9 +68,10 @@ Data: Jisho, KANJIDIC2, Wiktionary, Tatoeba, FrequencyWords. Text recognition: m
 
 **Screenshot captions:**
 
-1. `1-japanese-reader.png`: Reader view: reading, dictionary form and meaning at a glance.
-2. `2-manga-bubble.png`: Click a speech bubble to read and translate its text. The page is our own drawing.
+1. `1-japanese-reader.png`: Reader view with furigana: reading, dictionary form and meaning at a glance.
+2. `2-manga-bubble.png`: Click a speech bubble to read and translate its text, with furigana. The page is our own drawing.
 3. `3-korean-page.png`: Works on any page. Korean verbs lead to their dictionary form.
+4. `4-saved-words.png`: Save words with ☆ and find them again, with the sentence and source. No Anki needed.
 
 **Release notes for 0.6.0:**
 
