@@ -58,6 +58,7 @@ function fetchPage(id, word, ctx) {
 const FORM_OF_LINK = /class="form-of-definition-link"[^>]*>(?:<[^>]+>)*?<a [^>]*title="([^"]+)"/;
 
 // base: { word, formOf } for an inflected form, e.g. { word: "courir", formOf: "third-person … of courir" }.
+// Another spelling of the same word is not one: a romanization, or "alternative form of こんにち" on 今日.
 export function parse(data, src) {
   const definitions = [];
   const examples = [];
@@ -67,7 +68,9 @@ export function parse(data, src) {
     const romanization = /romanization/i.test(entry.partOfSpeech ?? "");
     for (const def of entry.definitions ?? []) {
       const text = stripHtml(def.definition);
-      const baseWord = romanization ? null : stripHtml(FORM_OF_LINK.exec(def.definition ?? "")?.[1]);
+      const linked = stripHtml(FORM_OF_LINK.exec(def.definition ?? "")?.[1]);
+      const alternativeForm = /^alternative (?:form|spelling) of\b/i.test(text);
+      const baseWord = romanization || alternativeForm ? null : linked;
       base ??= baseWord ? { word: baseWord, formOf: text } : null;
       if (text) definitions.push({ pos: entry.partOfSpeech ?? "", text, ...(baseWord ? { formOf: baseWord } : {}) });
       for (const example of def.parsedExamples ?? []) {
