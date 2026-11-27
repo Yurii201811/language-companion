@@ -236,6 +236,7 @@ test("Wiktionary does not treat a noun's alternative form as a base form", () =>
   assert.equal(parsed.base, null);
   assert.equal(parsed.definitions[0].text, "today, this day");
   assert.match(parsed.definitions[1].text, /^alternative form of こんにち/);
+  assert.equal(parsed.definitions[1].formOf, "こんにち");
 });
 
 test("quick peek of a noun shows its reading and not another reading as a base form", async () => {
@@ -275,6 +276,44 @@ test("Wiktionary shows the base word's definitions for an inflected form", async
   assert.deepEqual(urls, ["courait", "courir"]);
   assert.deepEqual(result.definitions, [{ pos: "Verb", text: "to run" }]);
   assert.equal(result.base.word, "courir");
+});
+
+test("Wiktionary follows an alternative spelling to its definitions without setting a base form", async () => {
+  const urls = [];
+  const pages = {
+    Photographie: {
+      de: [
+        {
+          partOfSpeech: "Noun",
+          definitions: [
+            {
+              definition:
+                '<span class="form-of-definition">alternative spelling of <span class="form-of-definition-link"><i class="Latn mention" lang="de"><a href="/wiki/Fotografie#German" title="Fotografie">Fotografie</a></i></span></span>',
+            },
+          ],
+        },
+      ],
+    },
+    Fotografie: {
+      de: [
+        {
+          partOfSpeech: "Noun",
+          definitions: [{ definition: "photography" }, { definition: "photograph" }],
+        },
+      ],
+    },
+  };
+  const fetch = async (url) => {
+    urls.push(decodeURIComponent(url.split("/").pop()));
+    return { ok: true, status: 200, json: async () => pages[urls.at(-1)] };
+  };
+  const result = await wiktionary.lookup({ text: "Photographie", src: "de" }, DEFAULTS, { fetch });
+  assert.deepEqual(urls, ["Photographie", "Fotografie"]);
+  assert.deepEqual(result.definitions, [
+    { pos: "Noun", text: "photography" },
+    { pos: "Noun", text: "photograph" },
+  ]);
+  assert.equal(result.base, null);
 });
 
 test("Jisho finds the dictionary form of a conjugated word, with its JLPT level", () => {
